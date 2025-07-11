@@ -9,6 +9,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -26,8 +27,16 @@ export class UsersService {
       throw new BadRequestException('User already exists');
     }
 
-    const user = this.userRepository.create(createUserDto);
+    const saltOrRounds = 10;
+    const hashPassword = await bcrypt.hash(
+      createUserDto.password,
+      saltOrRounds,
+    );
 
+    const user = this.userRepository.create({
+      ...createUserDto,
+      password: hashPassword,
+    });
     Logger.log('Usuário criado com sucesso: ', user);
 
     return this.userRepository.save(user);
